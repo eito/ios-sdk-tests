@@ -11,44 +11,55 @@
 @interface ViewController ()<UITableViewDataSource, UITableViewDelegate, CLLocationManagerDelegate>
 @property (nonatomic, weak) IBOutlet UITableView *tableView;
 @property (nonatomic, strong) CLLocationManager *locationManager;
-//
-// array of arrays...each array contains location updates we received at given time
 
+//
+// holds all location updates -- array of CLLocations
 @property (nonatomic, strong) NSMutableArray *locations;
+
+//
+// holds an single-location updates -- array of arrays
 @property (nonatomic, strong) NSMutableArray *singleLocationUpdates;
+
+//
+// holds an multi-location updates -- array of arrays
 @property (nonatomic, strong) NSMutableArray *multiLocationUpdates;
 @end
 
 @implementation ViewController {
+    //
+    // flag to determine if we should try to allow deferred location updates
     BOOL _atLeastFiveLocations;
-    CLLocation *_lastLocation;
+    
+    //
+    // if we are currently deferring, we  don't want to attempt to call allowDefer... again
     BOOL _deferring;
+    
+    //
+    // date formatter to specify time of location updates
+    NSDateFormatter *_medStyleDF;
 }
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view, typically from a nib.
     
-    self.navigationItem.title = @"Location Test";
+    self.navigationItem.title = @"Location Updates Test";
+    
+    //
+    // create our date formatter
+    _medStyleDF = [[NSDateFormatter alloc] init];
+    [_medStyleDF setTimeStyle:NSDateFormatterMediumStyle];
     
     self.locationManager = [[CLLocationManager alloc] init];
     self.locationManager.delegate = self;
     self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
     self.locationManager.distanceFilter = kCLDistanceFilterNone;
-//    self.locationManager.activityType = CLActivityTypeFitness;
     
     self.locations = [@[]mutableCopy];
     self.multiLocationUpdates = [@[]mutableCopy];
     self.singleLocationUpdates = [@[]mutableCopy];
     
     [self.locationManager startUpdatingLocation];
-}
-
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
 }
 
 #pragma mark UITableViewDataSource
@@ -70,11 +81,11 @@
 }
 
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    if (section == 0 || section == 1) {
-        return 1;
+    if (section == 2) {
+        return self.multiLocationUpdates.count;
     }
     else {
-        return self.multiLocationUpdates.count;
+        return 1;
     }
 }
 
@@ -104,9 +115,7 @@
         CLLocation *firstLoc = [updates firstObject];
         CLLocation *lastLoc = [updates lastObject];
 
-        NSDateFormatter *df = [[NSDateFormatter alloc] init];
-        [df setTimeStyle:NSDateFormatterMediumStyle];
-        cell.textLabel.text = [NSString stringWithFormat:@"%lu updates @ %@", (unsigned long)updates.count, [df stringFromDate:lastLoc.timestamp]];
+        cell.textLabel.text = [NSString stringWithFormat:@"%lu updates @ %@", (unsigned long)updates.count, [_medStyleDF stringFromDate:lastLoc.timestamp]];
         CLLocationDistance distance = [firstLoc distanceFromLocation:lastLoc];
         cell.detailTextLabel.text = [NSString stringWithFormat:@"%.2fm", distance];
     }
@@ -141,8 +150,6 @@
         [self.locationManager allowDeferredLocationUpdatesUntilTraveled:CLLocationDistanceMax timeout:CLTimeIntervalMax];
         _deferring = YES;
     }
-    
-    _lastLocation = [locations lastObject];
     
     [self.tableView reloadData];
 }
