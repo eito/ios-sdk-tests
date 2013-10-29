@@ -34,6 +34,8 @@ typedef enum {
 
 //
 // specifies the simulation mode -- the default is EAISimulatedLocationModeRealTime
+//
+// NOTE: if simuationMode is Custom, the speedup will not be used.
 @property (nonatomic, assign) EAISimulatedLocationMode simulationMode;
 
 //
@@ -46,6 +48,8 @@ typedef enum {
 //
 // if specified, all of the locations will be fired within the duration
 // set to 0 to use actual times
+//
+// NOTE: the simulationDuration must be >= 5.0 seconds
 @property (nonatomic, assign) NSTimeInterval simulationDuration;
 
 @end
