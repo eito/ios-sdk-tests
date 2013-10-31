@@ -36,10 +36,6 @@
     self = [super init];
     if (self) {
         self.simulatedLocations = locations;
-        CLLocation *first = [locations firstObject];
-        NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
-        NSTimeInterval firstTimestamp = [[first timestamp] timeIntervalSince1970];
-        _timeOffset = now - firstTimestamp;
     }
     return self;
 }
@@ -50,6 +46,11 @@
         @throw [NSException exceptionWithName:@"Error" reason:@"You must implement the appropriate delegate methods" userInfo:nil];
         return;
     }
+    CLLocation *first = [self.simulatedLocations firstObject];
+    NSTimeInterval now = [[NSDate date] timeIntervalSince1970];
+    NSTimeInterval firstTimestamp = [[first timestamp] timeIntervalSince1970];
+    _timeOffset = now - firstTimestamp;
+
     [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(fireLocationUpdates) userInfo:nil repeats:NO];
 }
 
