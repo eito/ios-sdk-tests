@@ -51,7 +51,14 @@
     NSTimeInterval firstTimestamp = [[first timestamp] timeIntervalSince1970];
     _timeOffset = now - firstTimestamp;
 
-    [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(fireLocationUpdates) userInfo:nil repeats:NO];
+    NSTimeInterval fireInterval = 0.1;
+    
+    if ((self.simulationMode == EAISimulatedLocationModeCustom) && self.simulationDuration > 5.0) {
+        // a simulation duration was specified so we need to ensure that the simulation finishes in <self.simulationDuration> seconds
+        fireInterval = self.simulationDuration / self.simulatedLocations.count;
+    }
+    
+    [NSTimer scheduledTimerWithTimeInterval:fireInterval target:self selector:@selector(fireLocationUpdates) userInfo:nil repeats:NO];
 }
 
 - (void)stopUpdatingLocation {
@@ -77,6 +84,7 @@
         NSTimeInterval nextTime = [nextLoc.timestamp timeIntervalSince1970];
         NSTimeInterval diff = nextTime - userSpecifiedLocTimestamp;
         
+        
         if (self.simulationMode == EAISimulatedLocationMode2X) {
             diff /= 2.0;
         }
@@ -87,12 +95,21 @@
             diff /= 10.0;
         }
         else if (self.simulationMode == EAISimulatedLocationModeCustom) {
+            if (self.simulationDuration >= 5.0) {
+                diff = self.simulationDuration / self.simulatedLocations.count;
+            }
             // check speed up
-            if (self.speedup > 1.0) {
+            else if (self.speedup > 1.0) {
                 diff /= self.speedup;
             }
         }
         [NSTimer scheduledTimerWithTimeInterval:diff target:self selector:@selector(fireLocationUpdates) userInfo:nil repeats:NO];
+    }
+    else {
+        if (self.repeats) {
+            _currentIndex = 0;
+            [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(fireLocationUpdates) userInfo:nil repeats:NO];
+        }
     }
 }
 @end
