@@ -52,6 +52,7 @@
     
     self.locationManager = [[CLLocationManager alloc] init];
     self.locationManager.delegate = self;
+    self.locationManager.activityType = CLActivityTypeFitness;
     self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
     self.locationManager.distanceFilter = kCLDistanceFilterNone;
     
@@ -128,7 +129,7 @@
 -(void)locationManager:(CLLocationManager *)manager didFinishDeferredUpdatesWithError:(NSError *)error {
     NSLog(@"%s -- error: %@", __PRETTY_FUNCTION__, error);
     _deferring = NO;
-    _atLeastFiveLocations = NO;
+//    _atLeastFiveLocations = NO;
 }
 
 -(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
@@ -143,7 +144,8 @@
         [self.multiLocationUpdates addObject:locations];
     }
     
-    _atLeastFiveLocations = (self.locations.count >= 5);
+    //_atLeastFiveLocations = (self.locations.count >= 5);
+    _atLeastFiveLocations = YES;
     
     if (!_deferring && _atLeastFiveLocations && [CLLocationManager deferredLocationUpdatesAvailable]) {
         NSLog(@"allow deferred location updates");
