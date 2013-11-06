@@ -37,6 +37,8 @@
     //
     // date formatter to specify time of location updates
     NSDateFormatter *_medStyleDF;
+    
+    CLRegion *_myRegion;
 }
 
 - (void)viewDidLoad
@@ -55,6 +57,7 @@
     self.locationManager.activityType = CLActivityTypeFitness;
     self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
     self.locationManager.distanceFilter = kCLDistanceFilterNone;
+    self.locationManager.pausesLocationUpdatesAutomatically = YES;
     
     self.locations = [@[]mutableCopy];
     self.multiLocationUpdates = [@[]mutableCopy];
@@ -128,6 +131,12 @@
 
 -(void)locationManager:(CLLocationManager *)manager didFinishDeferredUpdatesWithError:(NSError *)error {
     NSLog(@"%s -- error: %@", __PRETTY_FUNCTION__, error);
+    UILocalNotification *localNotif = [[UILocalNotification alloc] init];
+    localNotif.fireDate = [NSDate dateWithTimeIntervalSinceNow:0.1];
+    localNotif.alertBody = [NSString stringWithFormat:@"DEFER ended with error: %@ @ %@", [error localizedDescription], [_medStyleDF stringFromDate:[NSDate date]]];
+    localNotif.soundName = UILocalNotificationDefaultSoundName;
+    localNotif.applicationIconBadgeNumber = self.multiLocationUpdates.count;
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
     _deferring = NO;
 //    _atLeastFiveLocations = NO;
 }
@@ -142,6 +151,12 @@
     }
     else if (locations.count > 1) {
         [self.multiLocationUpdates addObject:locations];
+        UILocalNotification *localNotif = [[UILocalNotification alloc] init];
+        localNotif.fireDate = [NSDate dateWithTimeIntervalSinceNow:0.1];
+        localNotif.alertBody = [NSString stringWithFormat:@"%d deferred updates @ %@", locations.count, [_medStyleDF stringFromDate:[NSDate date]]];
+        localNotif.soundName = UILocalNotificationDefaultSoundName;
+        localNotif.applicationIconBadgeNumber = self.multiLocationUpdates.count;
+        [[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
     }
     
     //_atLeastFiveLocations = (self.locations.count >= 5);
@@ -156,4 +171,83 @@
     [self.tableView reloadData];
 }
 
+-(void)locationManagerDidPauseLocationUpdates:(CLLocationManager *)manager {
+    UILocalNotification *localNotif = [[UILocalNotification alloc] init];
+    localNotif.fireDate = [NSDate dateWithTimeIntervalSinceNow:0.1];
+    localNotif.alertBody = [NSString stringWithFormat:@"PAUSED updates @ %@", [_medStyleDF stringFromDate:[NSDate date]]];
+    localNotif.soundName = UILocalNotificationDefaultSoundName;
+    localNotif.applicationIconBadgeNumber = self.multiLocationUpdates.count;
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
+    
+    _myRegion = [[CLCircularRegion alloc] initWithCenter:self.locationManager.location.coordinate radius:100 identifier:@"MYREGION"];
+    [self.locationManager startMonitoringForRegion:_myRegion];
+
+    
+}
+
+-(void)locationManagerDidResumeLocationUpdates:(CLLocationManager *)manager {
+    UILocalNotification *localNotif = [[UILocalNotification alloc] init];
+    localNotif.fireDate = [NSDate dateWithTimeIntervalSinceNow:0.1];
+    localNotif.alertBody = [NSString stringWithFormat:@"RESUMED updates @ %@", [_medStyleDF stringFromDate:[NSDate date]]];
+    localNotif.soundName = UILocalNotificationDefaultSoundName;
+    localNotif.applicationIconBadgeNumber = self.multiLocationUpdates.count;
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
+}
+
+-(void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error {
+    UILocalNotification *localNotif = [[UILocalNotification alloc] init];
+    localNotif.fireDate = [NSDate dateWithTimeIntervalSinceNow:0.1];
+    localNotif.alertBody = [NSString stringWithFormat:@"FAILED with error: %@", [error localizedDescription]];
+    localNotif.soundName = UILocalNotificationDefaultSoundName;
+    localNotif.applicationIconBadgeNumber = self.multiLocationUpdates.count;
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
+}
+
+-(void)locationManager:(CLLocationManager *)manager didExitRegion:(CLRegion *)region {
+    if (![region.identifier isEqualToString:@"MYREGION"]) {
+        return;
+    }
+    UILocalNotification *localNotif = [[UILocalNotification alloc] init];
+    localNotif.fireDate = [NSDate dateWithTimeIntervalSinceNow:0.1];
+    localNotif.alertBody = [NSString stringWithFormat:@"EXITED REGION"];
+    localNotif.soundName = UILocalNotificationDefaultSoundName;
+    localNotif.applicationIconBadgeNumber = self.multiLocationUpdates.count;
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
+    [self.locationManager stopMonitoringForRegion:_myRegion];
+    [self.locationManager startUpdatingLocation];
+}
+
+-(void)locationManager:(CLLocationManager *)manager didEnterRegion:(CLRegion *)region {
+    if (![region.identifier isEqualToString:@"MYREGION"]) {
+        return;
+    }
+    UILocalNotification *localNotif = [[UILocalNotification alloc] init];
+    localNotif.fireDate = [NSDate dateWithTimeIntervalSinceNow:0.1];
+    localNotif.alertBody = [NSString stringWithFormat:@"ENTERRED REGION"];
+    localNotif.soundName = UILocalNotificationDefaultSoundName;
+    localNotif.applicationIconBadgeNumber = self.multiLocationUpdates.count;
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
+}
+
+-(void)locationManager:(CLLocationManager *)manager didDetermineState:(CLRegionState)state forRegion:(CLRegion *)region {
+    if (![region.identifier isEqualToString:@"MYREGION"]) {
+        return;
+    }
+    UILocalNotification *localNotif = [[UILocalNotification alloc] init];
+    localNotif.fireDate = [NSDate dateWithTimeIntervalSinceNow:0.1];
+    NSString *stateStr = nil;
+    if (state == CLRegionStateInside) {
+        stateStr = @"inside";
+    }
+    else if (state == CLRegionStateOutside) {
+        stateStr = @"outside";
+    }
+    else {
+        stateStr = @"unknown";
+    }
+    localNotif.alertBody = [NSString stringWithFormat:@"REGION STATE: %@", stateStr];
+    localNotif.soundName = UILocalNotificationDefaultSoundName;
+    localNotif.applicationIconBadgeNumber = self.multiLocationUpdates.count;
+    [[UIApplication sharedApplication] scheduleLocalNotification:localNotif];
+}
 @end

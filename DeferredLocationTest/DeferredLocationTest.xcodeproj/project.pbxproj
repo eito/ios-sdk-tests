@@ -181,7 +181,7 @@
 				ORGANIZATIONNAME = "Eric Ito";
 				TargetAttributes = {
 					4E92B959181C6C7E00176B18 = {
-						DevelopmentTeam = E9GZR66LB7;
+						DevelopmentTeam = P8HGHS7JQ8;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
 								enabled = 1;

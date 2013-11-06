@@ -13,9 +13,23 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    //
+    // reset to 0 each time app launches
+    application.applicationIconBadgeNumber = 0;
+    
     LocationNavController *nav = [[LocationNavController alloc] initWithRootViewController:self.window.rootViewController];
     self.window.rootViewController = nav;
     return YES;
+}
+
+- (void)application:(UIApplication *)app didReceiveLocalNotification:(UILocalNotification *)notif {
+    // Handle the notificaton when the app is running
+    UIAlertView *localNoteAV = [[UIAlertView alloc] initWithTitle:@"Local Notification"
+                                                          message:notif.alertBody
+                                                         delegate:nil
+                                                cancelButtonTitle:@"OK"
+                                                otherButtonTitles:nil];
+    [localNoteAV show];
 }
 							
 @end
